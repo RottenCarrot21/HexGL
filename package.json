@@ -1,0 +1,18 @@
+{
+  "name": "hexgl",
+  "version": "1.0.0",
+  "description": "HexGL - A futuristic HTML5 racing game",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@vitejs/plugin-legacy": "^5.4.2",
+    "coffeescript": "^2.7.0",
+    "vite": "^5.0.8",
+    "vite-plugin-static-copy": "^0.17.0"
+  }
+}
