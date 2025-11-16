@@ -10,6 +10,10 @@ export default defineConfig({
     }),
     viteStaticCopy({
       targets: [
+        { src: 'libs', dest: '.' },
+        { src: 'bkcore', dest: '.' },
+        { src: 'bkcore.coffee', dest: '.' },
+        { src: 'launch.js', dest: '.' },
         { src: 'textures', dest: '.' },
         { src: 'geometries', dest: '.' },
         { src: 'audio', dest: '.' },
