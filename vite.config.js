@@ -15,6 +15,7 @@ export default defineConfig({
         { src: 'bkcore.coffee', dest: '.' },
         { src: 'launch.js', dest: '.' },
         { src: 'textures', dest: '.' },
+        { src: 'textures.full', dest: '.' },
         { src: 'geometries', dest: '.' },
         { src: 'audio', dest: '.' },
         { src: 'css/help-*.png', dest: 'css' },
