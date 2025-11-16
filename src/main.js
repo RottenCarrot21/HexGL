@@ -1,19 +1,24 @@
-// Import Three.js from CDN
+// Import Three.js FIRST and make it globally available IMMEDIATELY
 import * as THREE from 'three';
+window.THREE = THREE;
+
+// Import CSS
+import '../css/multi.css';
+import '../css/fonts.css';
+
+// Set up global bkcore namespace
+window.bkcore = window.bkcore || {};
 
 // Import utilities
 import { Utils } from './bkcore/Utils.js';
 import { Timer } from './bkcore/Timer.js';
 import { ImageData } from './bkcore/ImageData.js';
 
-// Set up global bkcore namespace
-window.bkcore = window.bkcore || {};
 window.bkcore.Utils = Utils;
 window.bkcore.Timer = Timer;
 window.bkcore.ImageData = ImageData;
-window.THREE = THREE;
 
-// Load third-party legacy scripts dynamically
+// Load scripts sequentially to maintain order
 const loadScript = (src) => {
   return new Promise((resolve, reject) => {
     const script = document.createElement('script');
@@ -24,43 +29,50 @@ const loadScript = (src) => {
   });
 };
 
-// Load all required legacy libraries
-Promise.all([
-  loadScript('libs/leap-0.4.1.min.js'),
-  loadScript('libs/ShaderExtras.js'),
-  loadScript('libs/postprocessing/EffectComposer.js'),
-  loadScript('libs/postprocessing/RenderPass.js'),
-  loadScript('libs/postprocessing/BloomPass.js'),
-  loadScript('libs/postprocessing/ShaderPass.js'),
-  loadScript('libs/postprocessing/MaskPass.js'),
-  loadScript('libs/Detector.js'),
-  loadScript('libs/Stats.js'),
-  loadScript('libs/DAT.GUI.min.js')
-]).catch(err => console.error('Failed to load libraries:', err));
+// Load all scripts in sequence
+const loadAllScripts = async () => {
+  try {
+    // Load third-party legacy libraries
+    await loadScript('libs/leap-0.4.1.min.js');
+    await loadScript('libs/ShaderExtras.js');
+    await loadScript('libs/postprocessing/EffectComposer.js');
+    await loadScript('libs/postprocessing/RenderPass.js');
+    await loadScript('libs/postprocessing/BloomPass.js');
+    await loadScript('libs/postprocessing/ShaderPass.js');
+    await loadScript('libs/postprocessing/MaskPass.js');
+    await loadScript('libs/Detector.js');
+    await loadScript('libs/Stats.js');
+    await loadScript('libs/DAT.GUI.min.js');
+    
+    // Load bkcore modules (in correct dependency order)
+    await loadScript('bkcore/Audio.js');
+    await loadScript('bkcore/threejs/RenderManager.js');
+    await loadScript('bkcore/threejs/Shaders.js');
+    await loadScript('bkcore/threejs/Particles.js');
+    await loadScript('bkcore/threejs/Loader.js');
+    
+    await loadScript('bkcore/hexgl/RaceData.js');
+    await loadScript('bkcore/hexgl/ShipControls.js');
+    await loadScript('bkcore/hexgl/ShipEffects.js');
+    await loadScript('bkcore/hexgl/CameraChase.js');
+    await loadScript('bkcore/hexgl/HUD.js');
+    await loadScript('bkcore/hexgl/Gameplay.js');
+    await loadScript('bkcore/hexgl/Ladder.js');
+    
+    await loadScript('bkcore/hexgl/tracks/Cityscape.js');
+    await loadScript('bkcore/hexgl/HexGL.js');
+    
+    // Load controller code
+    await loadScript('bkcore.coffee/controllers/TouchController.js');
+    await loadScript('bkcore.coffee/controllers/OrientationController.js');
+    await loadScript('bkcore.coffee/controllers/GamepadController.js');
+    
+    // Load launch logic (this starts the app)
+    await loadScript('launch.js');
+  } catch (err) {
+    console.error('Failed to load scripts:', err);
+  }
+};
 
-// Import legacy JavaScript files - they define on bkcore namespace
-import './bkcore/Audio.js';
-import './bkcore/threejs/RenderManager.js';
-import './bkcore/threejs/Shaders.js';
-import './bkcore/threejs/Particles.js';
-import './bkcore/threejs/Loader.js';
-
-import './bkcore/hexgl/RaceData.js';
-import './bkcore/hexgl/ShipControls.js';
-import './bkcore/hexgl/ShipEffects.js';
-import './bkcore/hexgl/CameraChase.js';
-import './bkcore/hexgl/HUD.js';
-import './bkcore/hexgl/Gameplay.js';
-import './bkcore/hexgl/Ladder.js';
-
-import './bkcore/hexgl/tracks/Cityscape.js';
-
-import './bkcore/hexgl/HexGL.js';
-
-// Import controller code
-import './bkcore/controllers/TouchController.js';
-import './bkcore/controllers/OrientationController.js';
-import './bkcore/controllers/GamepadController.js';
-
-// Import the launch logic
-import './launch.js';
+// Start loading all scripts
+loadAllScripts();
