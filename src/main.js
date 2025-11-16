@@ -1,7 +1,3 @@
-// Import Three.js FIRST and make it globally available IMMEDIATELY
-import * as THREE from 'three';
-window.THREE = THREE;
-
 // Import CSS
 import '../css/multi.css';
 import '../css/fonts.css';
@@ -32,6 +28,9 @@ const loadScript = (src) => {
 // Load all scripts in sequence
 const loadAllScripts = async () => {
   try {
+    // Load legacy Three.js first (needed for old postprocessing libs)
+    await loadScript('/libs/Three.dev.js');
+    
     // Load third-party legacy libraries
     await loadScript('/libs/leap-0.4.1.min.js');
     await loadScript('/libs/ShaderExtras.js');

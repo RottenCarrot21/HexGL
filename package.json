@@ -8,9 +8,7 @@
     "build": "vite build",
     "preview": "vite preview"
   },
-  "dependencies": {
-    "three": "^0.128.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@vitejs/plugin-legacy": "^5.4.2",
     "coffeescript": "^2.7.0",
