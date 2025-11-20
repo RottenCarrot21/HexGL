@@ -26,18 +26,28 @@
     progressbar = $('progressbar');
     return hexGL.load({
       onLoad: function() {
-        console.log('LOADED.');
-        hexGL.init();
-        $('step-3').style.display = 'none';
-        $('step-4').style.display = 'block';
-        return hexGL.start();
+        console.log('LOADED (critical assets).');
       },
       onError: function(s) {
         return console.error("Error loading " + s + ".");
       },
       onProgress: function(p, t, n) {
         console.log("LOADED " + t + " : " + n + " ( " + p.loaded + " / " + p.total + " ).");
-        return progressbar.style.width = "" + (p.loaded / p.total * 100) + "%";
+        var progress = Math.min((p.loaded / p.total * 100), 100);
+        return progressbar.style.width = progress + "%";
+      },
+      onStaging: function(stage, stagedProgress) {
+        if (stage === 'critical_complete') {
+          console.log('Critical assets loaded, starting gameplay.');
+          hexGL.init();
+          $('step-3').style.display = 'none';
+          $('step-4').style.display = 'block';
+          hexGL.start();
+          progressbar.style.width = "100%";
+          console.log('Background loading deferred assets...');
+        } else if (stage === 'deferred_complete') {
+          console.log('Deferred assets loading complete.');
+        }
       }
     });
   };
