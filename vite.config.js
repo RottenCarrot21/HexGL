@@ -28,7 +28,9 @@ export default defineConfig({
         { src: 'css/*.ttf', dest: 'css' },
         { src: 'css/*.woff', dest: 'css' },
         { src: 'favicon.png', dest: '.' },
-        { src: 'icon_*.png', dest: '.' }
+        { src: 'icon_*.png', dest: '.' },
+        { src: 'manifest.json', dest: '.' },
+        { src: 'sw.js', dest: '.' }
       ]
     })
   ],

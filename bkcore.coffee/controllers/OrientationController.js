@@ -2,10 +2,11 @@
 
 /*
   OrientationController (Orientation + buttons) for touch devices
+  Updated with better iOS/Android compatibility and permission handling
   
   @class bkcore.OrientationController
   @author Thibaut 'BKcore' Despoulain <http://bkcore.com>
-*/
+ */
 
 
 (function() {
@@ -17,20 +18,48 @@
       return 'DeviceOrientationEvent' in window;
     };
 
+    OrientationController.needsPermission = function() {
+      // iOS 13+ requires permission for device orientation
+      return typeof DeviceOrientationEvent !== 'undefined' && 
+             typeof DeviceOrientationEvent.requestPermission === 'function';
+    };
+
+    OrientationController.requestPermission = function() {
+      if (OrientationController.needsPermission()) {
+        return DeviceOrientationEvent.requestPermission()
+          .then(response => {
+            if (response === 'granted') {
+              return true;
+            } else {
+              console.warn('Device orientation permission denied');
+              return false;
+            }
+          })
+          .catch(error => {
+            console.error('Error requesting device orientation permission:', error);
+            return false;
+          });
+      } else {
+        return Promise.resolve(true);
+      }
+    };
+
     /*
         Creates a new OrientationController
     
         @param dom DOMElement The element that will listen to touch events
         @param registerTouch bool Enable touch detection
         @param touchCallback function Callback for touches
+        @param permissionCallback function Callback for permission request status
     */
 
 
-    function OrientationController(dom, registerTouch, touchCallback) {
+    function OrientationController(dom, registerTouch, touchCallback, permissionCallback) {
       var _this = this;
       this.dom = dom;
       this.registerTouch = registerTouch != null ? registerTouch : true;
       this.touchCallback = touchCallback != null ? touchCallback : null;
+      this.permissionCallback = permissionCallback != null ? permissionCallback : null;
       this.active = true;
       this.alpha = 0.0;
       this.beta = 0.0;
@@ -39,58 +68,182 @@
       this.dbeta = null;
       this.dgamma = null;
       this.touches = null;
-      window.addEventListener('deviceorientation', (function(e) {
-        return _this.orientationChange(e);
-      }), false);
+      this.calibrated = false;
+      this.permissionGranted = false;
+      
+      // Check if we need to request permission (iOS 13+)
+      if (OrientationController.needsPermission()) {
+        this._requestPermissionAndSetup();
+      } else {
+        this._setupOrientationEvents();
+      }
+      
       if (this.registerTouch) {
-        this.dom.addEventListener('touchstart', (function(e) {
-          return _this.touchStart(e);
-        }), false);
-        this.dom.addEventListener('touchend', (function(e) {
-          return _this.touchEnd(e);
-        }), false);
+        this._setupTouchEvents();
       }
     }
 
     /*
-        @private
+        @private - Request permission and setup events
     */
 
+    OrientationController.prototype._requestPermissionAndSetup = function() {
+      var _this = this;
+      
+      // Try to request permission
+      OrientationController.requestPermission()
+        .then(granted => {
+          _this.permissionGranted = granted;
+          if (granted) {
+            _this._setupOrientationEvents();
+            if (_this.permissionCallback) {
+              _this.permissionCallback(true, 'Permission granted');
+            }
+          } else {
+            if (_this.permissionCallback) {
+              _this.permissionCallback(false, 'Permission denied');
+            }
+          }
+        })
+        .catch(error => {
+          console.error('Permission request failed:', error);
+          if (_this.permissionCallback) {
+            _this.permissionCallback(false, 'Permission request failed: ' + error.message);
+          }
+        });
+    };
+
+    /*
+        @private - Setup orientation event listeners
+    */
+
+    OrientationController.prototype._setupOrientationEvents = function() {
+      var _this = this;
+      
+      window.addEventListener('deviceorientation', function(e) {
+        return _this.orientationChange(e);
+      }, false);
+      
+      // Also listen to absolute orientation if available (better accuracy)
+      if ('DeviceOrientationEvent' in window && window.DeviceOrientationEvent.prototype.absolute !== undefined) {
+        window.addEventListener('deviceorientationabsolute', function(e) {
+          return _this.orientationChange(e);
+        }, false);
+      }
+    };
+
+    /*
+        @private - Setup touch event listeners with Pointer Events support
+    */
+
+    OrientationController.prototype._setupTouchEvents = function() {
+      var _this = this;
+      
+      // Use Pointer Events if available, otherwise fall back to touch events
+      if (window.PointerEvent || navigator.pointerEnabled || navigator.msPointerEnabled) {
+        var pointerDown = window.PointerEvent ? 'pointerdown' : 
+                         navigator.msPointerEnabled ? 'MSPointerDown' : 'pointerdown';
+        var pointerUp = window.PointerEvent ? 'pointerup' : 
+                       navigator.msPointerEnabled ? 'MSPointerUp' : 'pointerup';
+        
+        this.dom.addEventListener(pointerDown, function(e) {
+          return _this.touchStart(e);
+        }, false);
+        
+        this.dom.addEventListener(pointerUp, function(e) {
+          return _this.touchEnd(e);
+        }, false);
+      } else {
+        this.dom.addEventListener('touchstart', function(e) {
+          return _this.touchStart(e);
+        }, { passive: false });
+        
+        this.dom.addEventListener('touchend', function(e) {
+          return _this.touchEnd(e);
+        }, { passive: false });
+      }
+    };
+
+    /*
+        @private - Get touch coordinates from different event types
+    */
+
+    OrientationController.prototype._getTouchCoordinates = function(event) {
+      if (event.touches && event.touches.length > 0) {
+        return {
+          x: event.touches[0].clientX,
+          y: event.touches[0].clientY,
+          id: event.touches[0].identifier
+        };
+      } else if (event.changedTouches && event.changedTouches.length > 0) {
+        return {
+          x: event.changedTouches[0].clientX,
+          y: event.changedTouches[0].clientY,
+          id: event.changedTouches[0].identifier
+        };
+      } else if (event.clientX !== undefined) {
+        // Pointer event or mouse event
+        return {
+          x: event.clientX,
+          y: event.clientY,
+          id: event.pointerId || 1
+        };
+      }
+      return null;
+    };
+
+    /*
+        @private
+    */
 
     OrientationController.prototype.orientationChange = function(event) {
       if (!this.active) {
         return;
       }
+      
+      // Skip if event is null or doesn't have the required properties
+      if (!event || event.alpha === null || event.beta === null || event.gamma === null) {
+        return;
+      }
+      
       if (this.dalpha === null) {
-        console.log("calbrate", event.beta);
+        console.log("Calibrating orientation controller", event.beta, event.gamma);
         this.dalpha = event.alpha;
         this.dbeta = event.beta;
         this.dgamma = event.gamma;
+        this.calibrated = true;
       }
+      
       this.alpha = event.alpha - this.dalpha;
       this.beta = event.beta - this.dbeta;
       this.gamma = event.gamma - this.dgamma;
+      
+      // Normalize values to reasonable ranges
+      this.beta = Math.max(-90, Math.min(90, this.beta));
+      this.gamma = Math.max(-90, Math.min(90, this.gamma));
+      
       return false;
     };
 
     /*
         @private
     */
-
 
     OrientationController.prototype.touchStart = function(event) {
-      var touch, _i, _len, _ref;
       if (!this.active) {
         return;
       }
-      _ref = event.changedTouches;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        touch = _ref[_i];
-        if (typeof this.touchCallback === "function") {
-          this.touchCallback(true, touch, event);
-        }
+      
+      var coords = this._getTouchCoordinates(event);
+      if (!coords) {
+        return;
       }
-      this.touches = event.touches;
+      
+      if (typeof this.touchCallback === "function") {
+        this.touchCallback(true, coords, event);
+      }
+      
+      this.touches = event.touches || [coords];
       return false;
     };
 
@@ -98,21 +251,46 @@
         @private
     */
 
-
     OrientationController.prototype.touchEnd = function(event) {
-      var touch, _i, _len, _ref;
       if (!this.active) {
         return;
       }
-      _ref = event.changedTouches;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        touch = _ref[_i];
-        if (typeof this.touchCallback === "function") {
-          this.touchCallback(true, touch, event);
-        }
+      
+      var coords = this._getTouchCoordinates(event);
+      if (!coords) {
+        return;
       }
-      this.touches = event.touches;
+      
+      if (typeof this.touchCallback === "function") {
+        this.touchCallback(false, coords, event);
+      }
+      
+      this.touches = event.touches || [];
       return false;
+    };
+
+    /*
+        @public - Recalibrate the orientation sensor
+    */
+
+    OrientationController.prototype.recalibrate = function() {
+      this.dalpha = null;
+      this.dbeta = null;
+      this.dgamma = null;
+      this.calibrated = false;
+      console.log("Orientation controller recalibrated");
+    };
+
+    /*
+        @public - Check if controller is ready
+    */
+
+    OrientationController.prototype.isReady = function() {
+      if (OrientationController.needsPermission()) {
+        return this.permissionGranted && this.calibrated;
+      } else {
+        return this.calibrated;
+      }
     };
 
     return OrientationController;

@@ -1,0 +1,107 @@
+{
+  "name": "HexGL - Futuristic Racing Game",
+  "short_name": "HexGL",
+  "description": "HexGL is a futuristic racing game built with HTML5, WebGL and JavaScript. Challenge yourself on this fast-paced 3D game!",
+  "version": "1.2.0",
+  "start_url": "/",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "theme_color": "#667eea",
+  "background_color": "#000000",
+  "lang": "en",
+  "scope": "/",
+  "categories": ["games", "racing", "3d", "webgl"],
+  "icons": [
+    {
+      "src": "/icon_32.png",
+      "sizes": "32x32",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon_64.png",
+      "sizes": "64x64",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon_128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon_256.png",
+      "sizes": "256x256",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon_512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/gameplay-1.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "HexGL gameplay - racing through the futuristic city"
+    },
+    {
+      "src": "/screenshots/gameplay-2.png",
+      "sizes": "640x360",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "HexGL mobile gameplay"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Quick Race",
+      "short_name": "Race",
+      "description": "Start a quick race on Cityscape track",
+      "url": "/?quickrace=true&track=Cityscape",
+      "icons": [
+        {
+          "src": "/icon_96.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
+  "protocol_handlers": [
+    {
+      "protocol": "web+hexgl",
+      "url": "/?race=%s"
+    }
+  ],
+  "share_target": {
+    "action": "/?share=true",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "file_handlers": [
+    {
+      "action": "/?replay=true",
+      "accept": {
+        "application/json": [".hglr"]
+      }
+    }
+  ]
+}
