@@ -5,29 +5,6 @@ bkcore.Audio.sounds = {};
 bkcore.Audio.unlocked = false;
 bkcore.Audio.unlockCallbacks = [];
 
-bkcore.Audio.init = function(){
-	if(window.AudioContext||window.webkitAudioContext){
-		bkcore.Audio._ctx = new (window.AudioContext||window.webkitAudioContext)();
-		bkcore.Audio._panner = bkcore.Audio._ctx.createPanner();
-		bkcore.Audio._panner.connect(bkcore.Audio._ctx.destination);
-		
-		// Check if context is suspended (autoplay restrictions)
-		if (bkcore.Audio._ctx.state === 'suspended') {
-			console.info('Audio context is suspended - user interaction required to unlock audio');
-			bkcore.Audio._setupUnlockListeners();
-		} else {
-			bkcore.Audio.unlocked = true;
-		}
-	}
-	else {
-		bkcore.Audio._ctx = null;
-	}
-
-	bkcore.Audio.posMultipler = 1.5;
-};
-
-bkcore.Audio.init();
-
 /*
   @private - Setup listeners to unlock audio on user interaction
  */
@@ -54,7 +31,7 @@ bkcore.Audio._setupUnlockListeners = function() {
 			});
 		}
 		
-		// Remove the event listeners after first interaction
+		// Remove event listeners after first interaction
 		document.removeEventListener('touchstart', unlock, true);
 		document.removeEventListener('touchend', unlock, true);
 		document.removeEventListener('mousedown', unlock, true);
@@ -100,6 +77,29 @@ bkcore.Audio.onUnlock = function(callback) {
 		bkcore.Audio.unlockCallbacks.push(callback);
 	}
 };
+
+bkcore.Audio.init = function(){
+	if(window.AudioContext||window.webkitAudioContext){
+		bkcore.Audio._ctx = new (window.AudioContext||window.webkitAudioContext)();
+		bkcore.Audio._panner = bkcore.Audio._ctx.createPanner();
+		bkcore.Audio._panner.connect(bkcore.Audio._ctx.destination);
+		
+		// Check if context is suspended (autoplay restrictions)
+		if (bkcore.Audio._ctx.state === 'suspended') {
+			console.info('Audio context is suspended - user interaction required to unlock audio');
+			bkcore.Audio._setupUnlockListeners();
+		} else {
+			bkcore.Audio.unlocked = true;
+		}
+	}
+	else {
+		bkcore.Audio._ctx = null;
+	}
+
+	bkcore.Audio.posMultipler = 1.5;
+};
+
+bkcore.Audio.init();
 
 bkcore.Audio.addSound = function(src, id, loop, callback, usePanner){
 	var ctx = bkcore.Audio._ctx;

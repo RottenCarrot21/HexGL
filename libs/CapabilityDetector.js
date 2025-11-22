@@ -78,7 +78,7 @@ var CapabilityDetector = {
 
   // Web Audio API autoplay policy detection
   audioAutoplayRestricted: (function() {
-    if (!CapabilityDetector.audioContext) return false;
+    if (!window.AudioContext && !window.webkitAudioContext) return false;
     
     // Create a temporary context to check if it's suspended
     try {
