@@ -75,6 +75,12 @@
   }
 
   $('step-2').onclick = function() {
+    // Force unlock audio on user interaction
+    if (typeof bkcore !== 'undefined' && bkcore.Audio && bkcore.Audio.forceUnlock) {
+      bkcore.Audio.forceUnlock().then(() => {
+        console.log('Audio unlocked via user interaction');
+      });
+    }
     $('step-2').style.display = 'none';
     $('step-3').style.display = 'block';
     return init(s[0][3], s[1][3], s[2][3], s[3][3]);
@@ -95,28 +101,33 @@
   };
 
   hasWebGL = function() {
-    var canvas, gl;
-    gl = null;
-    canvas = document.createElement('canvas');
-    try {
-      gl = canvas.getContext("webgl");
-    } catch (_error) {}
-    if (gl == null) {
-      try {
-        gl = canvas.getContext("experimental-webgl");
-      } catch (_error) {}
-    }
-    return gl != null;
+    return (typeof CapabilityDetector !== 'undefined' && CapabilityDetector.webgl) || 
+           (typeof Detector !== 'undefined' && Detector.webgl);
   };
 
   if (!hasWebGL()) {
     getWebGL = $('start');
     getWebGL.innerHTML = 'WebGL is not supported!';
     getWebGL.onclick = function() {
-      return window.location.href = 'http://get.webgl.org/';
+      if (typeof CapabilityDetector !== 'undefined') {
+        CapabilityDetector.displayCapabilityErrors('step-1');
+      } else if (typeof Detector !== 'undefined') {
+        Detector.addGetWebGLMessage();
+      }
+      return false;
     };
+    // Also display the full capability errors immediately
+    if (typeof CapabilityDetector !== 'undefined') {
+      CapabilityDetector.displayCapabilityErrors('step-1');
+    }
   } else {
     $('start').onclick = function() {
+      // Force unlock audio on user interaction
+      if (typeof bkcore !== 'undefined' && bkcore.Audio && bkcore.Audio.forceUnlock) {
+        bkcore.Audio.forceUnlock().then(() => {
+          console.log('Audio unlocked via user interaction');
+        });
+      }
       $('step-1').style.display = 'none';
       $('step-2').style.display = 'block';
       return $('step-2').style.backgroundImage = "url(css/help-" + s[0][3] + ".png)";

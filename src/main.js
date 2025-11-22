@@ -39,7 +39,7 @@ const loadAllScripts = async () => {
     await loadScript('/libs/postprocessing/BloomPass.js');
     await loadScript('/libs/postprocessing/ShaderPass.js');
     await loadScript('/libs/postprocessing/MaskPass.js');
-    await loadScript('/libs/Detector.js');
+    await loadScript('/libs/CapabilityDetector.js');
     await loadScript('/libs/Stats.js');
     await loadScript('/libs/DAT.GUI.min.js');
     
@@ -74,4 +74,27 @@ const loadAllScripts = async () => {
 };
 
 // Start loading all scripts
-loadAllScripts();
+loadAllScripts().then(() => {
+  // Register service worker for PWA functionality
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js')
+      .then((registration) => {
+        console.log('Service Worker registered successfully:', registration);
+        
+        // Check for updates
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              // New version available
+              console.log('New service worker available');
+              // Could show update notification here
+            }
+          });
+        });
+      })
+      .catch((error) => {
+        console.error('Service Worker registration failed:', error);
+      });
+  }
+});
