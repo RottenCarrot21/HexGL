@@ -101,18 +101,25 @@
   };
 
   hasWebGL = function() {
-    return CapabilityDetector.webgl;
+    return (typeof CapabilityDetector !== 'undefined' && CapabilityDetector.webgl) || 
+           (typeof Detector !== 'undefined' && Detector.webgl);
   };
 
   if (!hasWebGL()) {
     getWebGL = $('start');
     getWebGL.innerHTML = 'WebGL is not supported!';
     getWebGL.onclick = function() {
-      CapabilityDetector.displayCapabilityErrors('step-1');
+      if (typeof CapabilityDetector !== 'undefined') {
+        CapabilityDetector.displayCapabilityErrors('step-1');
+      } else if (typeof Detector !== 'undefined') {
+        Detector.addGetWebGLMessage();
+      }
       return false;
     };
     // Also display the full capability errors immediately
-    CapabilityDetector.displayCapabilityErrors('step-1');
+    if (typeof CapabilityDetector !== 'undefined') {
+      CapabilityDetector.displayCapabilityErrors('step-1');
+    }
   } else {
     $('start').onclick = function() {
       // Force unlock audio on user interaction
